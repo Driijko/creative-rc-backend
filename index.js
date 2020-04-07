@@ -23,7 +23,12 @@ const data = {
       Python: [
         "pygame"
       ]
-    }
+    },
+    Mediums: [
+      "Design",
+      "Music",
+      "Visual Art"
+    ]
   }
 }
 
