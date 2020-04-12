@@ -1,7 +1,20 @@
 // Import libraries
+require('dotenv').config()
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+
+const credentials = {
+  client: {
+    id: process.env.OAUTHID,
+    secret: process.env.OAUTHSECRET
+  },
+  auth: {
+    tokenHost: 'https://www.recurse.com/oauth/authorize'
+  }
+};
+ 
+const oauth2 = require('simple-oauth2').create(credentials);
 
 // Express Initialize
 const app = express();
