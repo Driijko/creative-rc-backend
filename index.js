@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const https= require('https');
 
 // Express Initialize
 const app = express();
@@ -48,26 +49,7 @@ const credentials = {
   }
 };
 
-//creates an OAuth instance
 const oauth2 = require('simple-oauth2').create(credentials);
-
-app.get("/callback", async function (req, res) {
-  console.log("/callback");
-  const tokenConfig = {
-    code: req.query.code,
-    redirect_uri: "http://localhost:8000/callback"
-  };
-
-  try {
-    const result = await oauth2.authorizationCode.getToken(tokenConfig);
-    const accessToken = oauth2.accessToken.create(result);
-    console.log(accessToken)
-    res.redirect("/account");
-  } catch (error) {
-    console.log("Access Token Error", error.message);
-    res.send("Error creating token: " + error.message);
-  }
-});
 
 //login route
 app.get("/login", async function (req, res) {
@@ -84,9 +66,56 @@ app.get("/login", async function (req, res) {
   }
 });
 
+//callback route
+app.get("/callback", async function (req, res) {
+  console.log("/callback");
+  const tokenConfig = {
+    code: req.query.code,
+    redirect_uri: "http://localhost:8000/callback"
+  };
+
+  try {
+    const result = await oauth2.authorizationCode.getToken(tokenConfig);
+    const accessToken = oauth2.accessToken.create(result);
+    //access token
+    const token = accessToken.token.access_token
+    console.log(token)
+    //options for http request
+    const options = {
+      hostname: "www.recurse.com",
+      path: '/api/v1/profiles/me',
+      method: 'GET',
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    }
+    //http request to get the user's profile information
+    const req = https.request(options, res => {
+      res.setEncoding('utf8');
+      res.on('data', data => {
+        //data is a JSON of the user's profile information
+        console.log(data)
+      })
+    })
+
+    req.on('error', error => {
+      console.error(error)
+    })
+
+    req.end()
+    //redirect to account page
+    res.redirect("/account");
+  } catch (error) {
+    console.log("Access Token Error", error.message);
+    res.send("Error creating token: " + error.message);
+  }
+});
+
 app.get('/account', async (req, res) => {
   res.send("welcome to your account");
 });
+
+// Retrieve data
 
 
 // This is the data structure we will eventually use to send to our front end, but for now we'll keep it empty.
